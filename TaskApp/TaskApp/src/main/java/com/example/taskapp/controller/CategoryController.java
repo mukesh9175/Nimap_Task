@@ -1,0 +1,80 @@
+package com.example.taskapp.controller;
+
+import com.example.taskapp.model.Category;
+import com.example.taskapp.service.CategoryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.PageImpl;
+import java.util.Collections;
+
+
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/categories")
+public class CategoryController {
+
+    private final CategoryService categoryService;
+
+    @Autowired
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<Category>> getAllCategories(Pageable pageable) {
+        Page<Category> categories = categoryService.getAllCategories(pageable);
+
+        // If the requested page is beyond available pages, return an empty Page object
+        if (pageable.getPageNumber() >= categories.getTotalPages()) {
+            return ResponseEntity.ok(new PageImpl<>(Collections.emptyList(), pageable, categories.getTotalElements()));
+        }
+
+        return ResponseEntity.ok(categories);
+    }
+
+
+
+    @PostMapping
+    public ResponseEntity<Category> createCategory(@RequestBody Category category) {
+        return ResponseEntity.ok(categoryService.createCategory(category));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Category> getCategoryById(@PathVariable("id") Long id) {
+        System.out.println("Fetching category with ID: " + id);
+        Optional<Category> category = categoryService.getCategoryById(id);
+
+        return category.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Category> updateCategory(
+            @PathVariable("id") Long id, 
+            @RequestBody Category category) {
+        
+        System.out.println("Updating category with ID: " + id);
+        
+        Optional<Category> updatedCategory = categoryService.updateCategory(id, category);
+        
+        return updatedCategory
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable("id") Long id) {
+        System.out.println("Deleting category with ID: " + id);
+        categoryService.deleteCategory(id);  // ✅ Use the correct method name
+        return ResponseEntity.noContent().build();
+    }
+
+
+
+
+}

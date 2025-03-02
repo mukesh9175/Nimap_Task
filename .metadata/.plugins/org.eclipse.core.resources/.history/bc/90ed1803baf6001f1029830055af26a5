@@ -1,0 +1,63 @@
+package com.example.taskapp.controller;
+
+import com.example.taskapp.model.Category;
+import com.example.taskapp.service.CategoryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/categories")
+public class CategoryController {
+
+    @Autowired
+    private CategoryService categoryService;
+
+    // ✅ Get All Categories (Paginated)
+    @GetMapping
+    public ResponseEntity<Page<Category>> getAllCategories(Pageable pageable) {
+        Page<Category> categories = categoryService.getAllCategories(pageable);
+        return ResponseEntity.ok(categories);
+    }
+
+    // ✅ Create New Category with Validation
+    @PostMapping
+    public ResponseEntity<Category> createCategory(@RequestBody Category category) {
+        if (category.getName() == null || category.getName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Category savedCategory = categoryService.createCategory(category);
+        return ResponseEntity.ok(savedCategory);
+    }
+
+    // ✅ Get Category by ID with Explicit @PathVariable
+    @GetMapping("/{id}")
+    public ResponseEntity<Category> getCategoryById(@PathVariable("id") Long id) {
+        Optional<Category> category = categoryService.getCategoryById(id);
+        return category.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    // ✅ Update Category by ID (Handle Not Found Case)
+    @PutMapping("/{id}")
+    public ResponseEntity<Category> updateCategory(@PathVariable("id") Long id, @RequestBody Category category) {
+        if (category.getName() == null || category.getName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<Category> updatedCategory = categoryService.updateCategory(id, category);
+        return updatedCategory.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    // ✅ Delete Category by ID (Handle Not Found Case)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable("id") Long id) {
+        boolean isDeleted = categoryService.deleteCategory(id);
+        if (!isDeleted) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+}

@@ -1,0 +1,55 @@
+package com.example.taskapp.controller;
+
+import com.example.taskapp.model.Category;
+import com.example.taskapp.service.CategoryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/categories")
+public class CategoryController {
+
+    @Autowired
+    private CategoryService categoryService;
+
+    @GetMapping
+    public Page<Category> getAllCategories(Pageable pageable) {
+        return categoryService.getAllCategories(pageable);
+    }
+
+    @PostMapping
+    public Category createCategory(@RequestBody Category category) {
+        return categoryService.createCategory(category);
+    }
+
+ // ✅ Get Category by ID with Proper Error Handling
+    @GetMapping("/{id}")
+    public ResponseEntity<Category> getCategoryById(@PathVariable(name = "id") Long id) {
+        Optional<Category> category = categoryService.getCategoryById(id);
+        return category.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Category> updateCategory(@PathVariable(name = "id") Long id, 
+                                                   @RequestBody Category category) {
+        if (category.getName() == null || category.getName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<Category> updatedCategory = categoryService.updateCategory(id, category);
+        return updatedCategory.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        categoryService.deleteCategory(id);
+        return ResponseEntity.noContent().build();
+    }
+}
